@@ -68,7 +68,7 @@ class LoggingObject(object):
 class ProjectExtractor(LoggingObject):
     def __init__(self, index_file, env = None, pkg_cache = None,
                  repo_cache = None, repo_path = None, distro_url = None,
-                 require_repos = False, parse_nodes = False, node_cache = None):
+                 require_repos = False, parse_nodes = True, node_cache = None):
         self.log.debug("ProjectExtractor(%s, %s, %s)",
                        index_file, repo_path, distro_url)
         self.index_file = index_file
@@ -211,6 +211,7 @@ class ProjectExtractor(LoggingObject):
         extractor = NodeExtractor(pkgs, self.environment, ws = ws,
                                   node_cache = self.node_cache,
                                   parse_nodes = self.parse_nodes)
+        CppAstParser.set_library_path()
         if self.parse_nodes and not CppAstParser is None:
             if settings is None:
                 CppAstParser.set_library_path()
@@ -672,13 +673,13 @@ class PackageParser(LoggingObject):
 
 class NodeExtractor(LoggingObject):
     def __init__(self, pkgs, env, ws = None, node_cache = None,
-                 parse_nodes = False):
+                 parse_nodes = True):
         self.package = None
         self.packages = pkgs
         self.environment = env
         self.workspace = ws or self._find_workspace()
         self.node_cache = node_cache
-        self.parse_nodes = parse_nodes
+        self.parse_nodes = True
         self.nodes = []
 
     def find_nodes(self, pkg):
@@ -795,7 +796,7 @@ class NodeExtractor(LoggingObject):
 
     def _roscpp_analysis(self, node):
         self.log.debug("Parsing C++ files for node %s", node.id)
-        parser = CppAstParser(workspace = self.workspace, user_includes = self._catkin_includes())
+        parser = CppAstParser(workspace = self.workspace)
         for sf in node.source_files:
             self.log.debug("Parsing C++ file %s", sf.path)
             if parser.parse(sf.path) is None:
