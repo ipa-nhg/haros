@@ -211,7 +211,7 @@ class ProjectExtractor(LoggingObject):
         extractor = NodeExtractor(pkgs, self.environment, ws = ws,
                                   node_cache = self.node_cache,
                                   parse_nodes = self.parse_nodes)
-        CppAstParser.set_library_path()
+        #CppAstParser.set_library_path()
         if self.parse_nodes and not CppAstParser is None:
             if settings is None:
                 CppAstParser.set_library_path()
@@ -803,6 +803,8 @@ class NodeExtractor(LoggingObject):
                 self.log.warning("no compile commands for " + sf.path)
         node.source_tree = parser.global_scope
     # ----- queries after parsing, since global scope is reused ---------------
+        print "#######"
+        print "RosPackage: "+node.package.name+" Node: "+node.name
         self._query_comm_primitives(node, parser.global_scope)
         self._query_nh_param_primitives(node, parser.global_scope)
         self._query_param_primitives(node, parser.global_scope)
@@ -820,6 +822,7 @@ class NodeExtractor(LoggingObject):
         for call in (CodeQuery(gs).all_calls.where_name("serviceClient")
                      .where_result("ros::ServiceClient").get()):
             self._on_client(node, self._resolve_node_handle(call), call)
+        print "#######"
 
     def _query_nh_param_primitives(self, node, gs):
         nh_prefix = "c:@N@ros@S@NodeHandle@"
@@ -877,6 +880,7 @@ class NodeExtractor(LoggingObject):
                           control_depth = depth, conditions = conditions,
                           repeats = is_under_loop(call, recursive = True))
         node.advertise.append(pub)
+        print "RosPublisher name: "+name+" type: "+msg_type
         self.log.debug("Found Publication on %s/%s (%s)", ns, name, msg_type)
 
     def _on_subscription(self, node, ns, call):
@@ -893,6 +897,7 @@ class NodeExtractor(LoggingObject):
                            control_depth = depth, conditions = conditions,
                            repeats = is_under_loop(call, recursive = True))
         node.subscribe.append(sub)
+        print "RosSubscriber name: "+name+" type: "+msg_type
         self.log.debug("Found Subscription on %s/%s (%s)", ns, name, msg_type)
 
     def _on_service(self, node, ns, call):
@@ -908,6 +913,7 @@ class NodeExtractor(LoggingObject):
                                 control_depth = depth, conditions = conditions,
                                 repeats = is_under_loop(call, recursive = True))
         node.service.append(srv)
+        print "RosSrvService name: "+name+" type: "+msg_type
         self.log.debug("Found Service on %s/%s (%s)", ns, name, msg_type)
 
     def _on_client(self, node, ns, call):
@@ -923,6 +929,7 @@ class NodeExtractor(LoggingObject):
                                 control_depth = depth, conditions = conditions,
                                 repeats = is_under_loop(call, recursive = True))
         node.client.append(cli)
+        print "RosSrvClient name: "+name+" type: "+msg_type
         self.log.debug("Found Client on %s/%s (%s)", ns, name, msg_type)
 
     def _on_read_param(self, node, ns, call):
