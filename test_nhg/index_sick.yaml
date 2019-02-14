@@ -1,0 +1,6 @@
+%YAML 1.1
+---
+project: sick
+packages:
+    - cob_sick_s300
+

@@ -1,0 +1,9 @@
+%YAML 1.1
+---
+ workspace: 'path_to_ws'
+ environment: null
+ plugin_blacklist: []
+ cpp:
+    parser_lib: '/usr/lib/llvm-3.8/lib'
+    std_includes: '/usr/lib/llvm-3.8/include/clang-c'
+    compile_db: 'path_to_ws/build'
