@@ -5,5 +5,5 @@
  plugin_blacklist: []
  cpp:
     parser_lib: '/usr/lib/llvm-3.8/lib'
-    std_includes: '/usr/lib/llvm-3.8/include/clang-c'
+    std_includes: '/usr/lib/llvm-3.8/lib/clang/3.8.0/include'
     compile_db: 'path_to_ws/build'
