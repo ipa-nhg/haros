@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased]
 N/A
 
+## [3.2.0] - 2019-04-04
+### Added
+- `~/.haros/configs.yaml` file can be used to ignore specific rules or tags.
+- C++ files can be annotated with `// haros:ignore-line` and `// haros:ignore-next-line` to exclude specific lines from analysis.
+- Python files can be annotated with `# haros:ignore-line` and `# haros:ignore-next-line` to exclude specific lines from analysis.
+
+## [3.1.2] - 2019-03-20
+### Added
+- `requirements.txt` file.
+
+### Changed
+- Replaced `yaml.load` with `yaml.safe_load`.
+- Added a monkey patch for `pyflwor`, so that it now works from a `pip install`.
+
+## [3.1.1] - 2019-03-04
+### Changed
+- Made the dependency on `pyflwor` optional (#38).
+- Updated README to reflect this (#40).
+
 ## [3.1.0] - 2019-01-30
 ### Added
 - HAROS can now detect workspaces built with `catkin_make_isolated` and `catkin build`.
