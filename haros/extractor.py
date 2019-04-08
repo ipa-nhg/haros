@@ -91,7 +91,7 @@ class ProjectExtractor(LoggingObject):
         self.configurations = None
         self.rules = None
 
-    def index_source(self, settings = None):
+    def index_source(self, settings=None):
         self.log.debug("ProjectExtractor.index_source()")
         self._setup()
         self._load_user_repositories()
@@ -102,14 +102,14 @@ class ProjectExtractor(LoggingObject):
         self._topological_sort()
         for name in self.missing:
             self.log.warning("Could not find package " + name)
-        self._populate_packages()
+        self._populate_packages(settings=settings)
         self._update_node_cache()
         self._find_nodes(settings)
 
     def _setup(self):
         try:
             with open(self.index_file, "r") as handle:
-                data = yaml.load(handle)
+                data = yaml.safe_load(handle)
         except IOError as e:
             data = {}
         self.project = Project(data.get("project", "default"))
@@ -157,7 +157,7 @@ class ProjectExtractor(LoggingObject):
     def _load_distro_repositories(self):
         self.log.info("Looking up repositories from official distribution.")
         try:
-            data = yaml.load(urlopen(self.distribution).read())["repositories"]
+            data = yaml.safe_load(urlopen(self.distribution).read())["repositories"]
         except URLError as e:
             self.log.warning("Could not download distribution data.")
             return
@@ -203,11 +203,13 @@ class ProjectExtractor(LoggingObject):
             tier += 1
         self.project.packages.sort(key = attrgetter("topological_tier", "id"))
 
-    def _populate_packages(self):
+    def _populate_packages(self, settings=None):
         extractor = PackageExtractor()
         extractor.packages = self.project.packages
         for pkg in self.project.packages:
-            extractor._populate_package(pkg)
+            analysis_ignore = extractor._populate_package(pkg)
+            if not settings is None:
+                settings.ignored_lines.update(analysis_ignore)
 
     def _find_nodes(self, settings):
         pkgs = {pkg.name: pkg for pkg in self.project.packages}
@@ -563,6 +565,7 @@ class PackageExtractor(LoggingObject):
             self.log.debug("Package %s has no path", pkg.name)
             return
         self.log.info("Indexing source files for package %s", pkg.name)
+        analysis_ignore = {}
         pkgs = {pkg.id: pkg for pkg in self.packages}
         launch_parser = LaunchParser(pkgs = pkgs)
         prefix = len(pkg.path) + len(os.path.sep)
@@ -572,7 +575,9 @@ class PackageExtractor(LoggingObject):
             for filename in files:
                 self.log.debug("Found file %s at %s", filename, path)
                 source = SourceFile(filename, path, pkg)
-                source.set_file_stats()
+                ignore = source.set_file_stats()
+                if any(v for v in ignore.itervalues()):
+                    analysis_ignore[source.id] = ignore
                 if source.language == "launch":
                     self.log.info("Parsing launch file: " + source.path)
                     try:
@@ -584,6 +589,7 @@ class PackageExtractor(LoggingObject):
                 pkg.size += source.size
                 pkg.lines += source.lines
                 pkg.sloc += source.sloc
+        return analysis_ignore
 
 
 ###############################################################################

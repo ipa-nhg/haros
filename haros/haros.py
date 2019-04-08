@@ -148,6 +148,12 @@ class HarosLauncher(object):
                 os.chdir(args.cwd)
             self.log.info("Executing selected command.")
             return args.command(args, settings)
+        except KeyError as err:
+            if str(err) == "ROS_WORKSPACE":
+                print "[HAROS] You must have a workspace set up."
+                print "  Make sure to source its `devel/setup.bash`."
+            self.log.error(str(err))
+            return False
         except RuntimeError as err:
             self.log.error(str(err))
             return False
@@ -189,7 +195,8 @@ class HarosLauncher(object):
         export = HarosExportRunner(self.HAROS_DIR, args.data_dir,
                                    args.export_viz, args.project,
                                    log = self.log,
-                                   run_from_source = self.run_from_source)
+                                   run_from_source = self.run_from_source,
+                                   settings = settings)
         return export.run()
 
     def command_viz(self, args, settings):
@@ -303,6 +310,7 @@ class HarosRunner(object):
         self.export_dir         = os.path.join(haros_dir, "export")
         self.project_dir        = os.path.join(haros_dir, "projects")
         self.viz_dir            = os.path.join(haros_dir, "viz")
+        self.pyflwor_dir        = os.path.join(haros_dir, "pyflwor")
         self.log                = log or logging.getLogger()
         self.run_from_source    = run_from_source
 
@@ -374,7 +382,8 @@ class HarosInitRunner(HarosRunner):
         "export": {},
         "projects": {
             "default": {}
-        }
+        },
+        "pyflwor": {}
         # viz is generated on viz.install
     }
 
@@ -485,7 +494,7 @@ class HarosAnalyseRunner(HarosCommonExporter):
 
     def run(self):
         self.database = HarosDatabase()
-        plugins = self._load_definitions_and_plugins()
+        plugins, rules, metrics = self._load_definitions_and_plugins()
         node_cache = {}
         if self.parse_nodes and self.use_cache:
             parse_cache = os.path.join(self.root, "parse_cache.json")
@@ -497,7 +506,7 @@ class HarosAnalyseRunner(HarosCommonExporter):
         configs, env = self._extract_metamodel(node_cache)
         self._load_database()
         self._extract_configurations(self.database.project, configs, env)
-        self._analyse(plugins)
+        self._analyse(plugins, rules, metrics)
         self._save_results(node_cache)
         self.database = None
         return True
@@ -515,6 +524,7 @@ class HarosAnalyseRunner(HarosCommonExporter):
                                      parse_nodes = self.parse_nodes)
         if self.parse_nodes:
             print "  > Parsing nodes might take some time."
+        # NOTE: this updates settings with ignore-line comments
         extractor.index_source(settings = self.settings)
         self.project = extractor.project.name
         if not extractor.project.packages:
@@ -567,31 +577,45 @@ class HarosAnalyseRunner(HarosCommonExporter):
             self.database.history.append(haros_db.report)
 
     def _load_definitions_and_plugins(self):
+        rules = set()
+        metrics = set()
         print "[HAROS] Loading common definitions..."
-        self.database.load_definitions(self.definitions_file)
+        rs, ms = self.database.load_definitions(self.definitions_file,
+                ignored_rules=self.settings.ignored_rules,
+                ignored_tags=self.settings.ignored_tags,
+                ignored_metrics=self.settings.ignored_metrics)
+        rules.update(rs)
+        metrics.update(ms)
         print "[HAROS] Loading plugins..."
         blacklist = self.blacklist or self.settings.plugin_blacklist
         plugins = Plugin.load_plugins(self.plugin_dir,
-                                      whitelist = self.whitelist,
-                                      blacklist = blacklist,
-                                      common_rules = self.database.rules,
-                                      common_metrics = self.database.metrics)
+                                      whitelist=self.whitelist,
+                                      blacklist=blacklist,
+                                      common_rules=self.database.rules,
+                                      common_metrics=self.database.metrics)
         if not plugins:
             raise RuntimeError("There are no analysis plugins.")
         for plugin in plugins:
             print "  > Loaded " + plugin.name
             prefix = plugin.name + ":"
-            self.database.register_rules(plugin.rules, prefix = prefix)
-            self.database.register_metrics(plugin.metrics, prefix = prefix)
-        return plugins
+            rs = self.database.register_rules(plugin.rules, prefix=prefix,
+                    ignored_rules=self.settings.ignored_rules,
+                    ignored_tags=self.settings.ignored_tags)
+            ms = self.database.register_metrics(plugin.metrics, prefix=prefix,
+                    ignored_metrics=self.settings.ignored_metrics)
+            rules.update(rs)
+            metrics.update(ms)
+        return plugins, rules, metrics
 
-    def _analyse(self, plugins):
+    def _analyse(self, plugins, rules, metrics):
         print "[HAROS] Running analysis..."
         self._empty_dir(self.export_dir)
         temp_path = tempfile.mkdtemp()
-        analysis = AnalysisManager(self.database, temp_path, self.export_dir)
+        analysis = AnalysisManager(self.database, temp_path, self.export_dir,
+                                   pyflwor_dir=self.pyflwor_dir)
         try:
-            analysis.run(plugins)
+            analysis.run(plugins, allowed_rules=rules, allowed_metrics=metrics,
+                         ignored_lines=self.settings.ignored_lines)
             self.database.report = analysis.report
         finally:
             rmtree(temp_path)
