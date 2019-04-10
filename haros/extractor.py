@@ -1047,12 +1047,14 @@ class NodeExtractor(LoggingObject):
         return type_string.replace("::", "/")
 
     def _extract_action(self, call):
-        if len(call.arguments) >2:
+        if call.name == "SimpleActionServer" and len(call.arguments) >2:
             arg = call.arguments[1]
             if len(arg.pretty_str().split()) == 1 :
                 name = resolve_reference(arg)
             else:
                 name = arg.pretty_str().split()[-1].replace("'", "")
+        elif call.name == "SimpleActionClient" and len(call.arguments) > 1:
+            name = call.arguments[0]
         else: #FIXME
             name = "?"
         return name
