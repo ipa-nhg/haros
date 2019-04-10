@@ -846,6 +846,7 @@ class RoscppExtractor(LoggingObject):
         self.log.debug("Found Write on %s/%s (%s)", ns, name, "string")
 
     def _call_location(self, call):
+        source_file = None
         try:
             source_file = next(
                 sf
@@ -1039,6 +1040,7 @@ class RospyExtractor(LoggingObject):
     @classmethod
     def _extract_message_type(cls, call, arg_name, arg_pos=1):
         msg_type = cls.get_arg(call, 1, arg_name)
+        print call
         if isinstance(msg_type, CodeReference):
             msg_type = resolve_reference(msg_type)
         return msg_type
@@ -1056,6 +1058,9 @@ class RospyExtractor(LoggingObject):
 
         ns, name = self._extract_topic(call)
         msg_type = self._extract_message_type(call, 'service_class')
+        print "Service client found"
+        print "name", name
+        print "srv", msg_type
         depth = get_control_depth(call, recursive=True)
         location = self._call_location(call)
         conditions = [SourceCondition(pretty_str(c), location=location)
@@ -1072,6 +1077,9 @@ class RospyExtractor(LoggingObject):
 
         ns, name = self._extract_topic(call)
         msg_type = self._extract_message_type(call, 'data_class')
+        print "Publisher found"
+        print "name", name
+        print "msg", msg_type
         queue_size = self._extract_queue_size(call)
         depth = get_control_depth(call, recursive=True)
         location = self._call_location(call)
@@ -1088,6 +1096,9 @@ class RospyExtractor(LoggingObject):
             return
         ns, name = self._extract_topic(call)
         msg_type = self._extract_message_type(call, 'service_class')
+        print "Service server found"
+        print "name", name
+        print "srv", msg_type
         depth = get_control_depth(call, recursive=True)
         location = self._call_location(call)
         conditions = [SourceCondition(pretty_str(c), location=location)
@@ -1103,6 +1114,9 @@ class RospyExtractor(LoggingObject):
             return
         ns, name = self._extract_topic(call)
         msg_type = self._extract_message_type(call, 'data_class')
+        print "Subscriber found"
+        print "name", name
+        print "msg", msg_type
         queue_size = self._extract_queue_size(call)
         depth = get_control_depth(call, recursive=True)
         location = self._call_location(call)
