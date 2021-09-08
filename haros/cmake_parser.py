@@ -275,6 +275,9 @@ class CMakeParser(object):
 
         block = []
         for line in self.input:
+            print("!!!CMakeParser:")
+            print(line)
+            print(self.input)
             while True:
                 try:
                     func, args, comment = CMakeGrammar.parse_line(line)
