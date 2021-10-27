@@ -1819,11 +1819,17 @@ class RospyExtractor(LoggingObject):
         return "?"
 
     @classmethod
-    def _extract_topic(cls, call):
-        name = resolve_expression(cls.get_arg(call, 0, 'name'))
+    #def _extract_topic(cls, call):
+    #    name = resolve_expression(cls.get_arg(call, 0, 'name'))
+    #    if not isinstance(name, basestring):
+    #        name = '?'
+    #    return cls.split_ns_name(name)
+
+    def _extract_topic(self, call, topic_pos=0):
+        name = resolve_expression(call.arguments[topic_pos])
         if not isinstance(name, basestring):
-            name = '?'
-        return cls.split_ns_name(name)
+            name = "?"
+        return name or "?"
 
     def _on_client(self, node, call):
         if self.invalid_call(call):
