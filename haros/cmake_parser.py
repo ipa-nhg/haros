@@ -67,8 +67,8 @@ class IncompleteStatementError(Exception):
     pass
 
 class CMakeGrammar(object):
-    _reParenArgFuncs = (r"(?ix)"
-        + "(?P<parenArgFunc>"
+    _reParenArgFuncs = (
+        "(?P<parenArgFunc>"
         + "|".join(
             """
             if
@@ -83,25 +83,25 @@ class CMakeGrammar(object):
             """.split())
         + r")")
 
-    _reFuncName = r"(?x) (?P<FuncName> [\w\d]+)"
+    _reFuncName = r"(?P<FuncName> [\w\d]+)"
 
-    _reArgs = r"(?x) (?P<Args> (\S ((\s)*\S)*))"
+    _reArgs = r"(?P<Args> (\S ((\s)*\S)*))"
 
-    _reArg = r"""(?x) (?:
-                 \(|
-                 \)|
-                 (?:\\.|[^"'\s\(\)])+|
-                 "(?:\\.|[^"\\])*"|
-                 '(?:\\.|[^'\\])*')
-             """
+    _reArg = r""" (?:
+                \(|
+                \)|
+                (?:\\.|[^"'\s\(\)])+|
+                "(?:\\.|[^"\\])*"|
+                '(?:\\.|[^'\\])*')
+            """
 
-    _reComment = r"(?x) (?P<Comment> (?<!\\) \# (?: [^\S\n]* \S+)*)"
+    _reComment = r"(?P<Comment> (?<!\\) \# (?: [^\S\n]* \S+)*)"
 
     _reCommandStart = _reFuncName + r"\s* \("
 
     _reCommandEnd = r"\)"
 
-    _reFullLine = ( r"^\s*(?P<FullLine>"
+    _reFullLine = (
                 + r"("
                 + _reCommandStart
                 + r"\s*"
@@ -117,7 +117,7 @@ class CMakeGrammar(object):
                 + r")?"
                 + r")\s*$")
 
-    _reMLChunk = ( r"(?mx)(" + _reComment + "\n|" + _reArg + ")")
+    _reMLChunk = r"(?m)(" + _reComment + r"\n|" + _reArg + r")"
 
     reFullLine = re.compile(_reFullLine, (re.IGNORECASE
                                           | re.VERBOSE
@@ -133,16 +133,13 @@ class CMakeGrammar(object):
         "while": ("endwhile",)
     }
 
-    _reBlockBeginnings = (r"(?ix)"
-                          + r"(?P<BlockBeginnings>"
-                          + "|".join(list(_blockTagsDict.keys()))
-                          + r")")
+    _reBlockBeginnings = r"(?P<BlockBeginnings>" + "|".join(list(_blockTagsDict.keys())) + r")"
 
     reBlockBeginnings = re.compile(_reBlockBeginnings, re.IGNORECASE)
 
     dReBlockTagsDict = dict([
         (beginning,
-         re.compile(r"(?ix)^(?P<BlockEnding>"
+        re.compile(r"^(?P<BlockEnding>"
                     + r"|".join(ends)
                     + r")$", re.IGNORECASE)
         ) for beginning, ends in _blockTagsDict.items()

@@ -1068,7 +1068,7 @@ class NodeExtractor(LoggingObject):
         else:
             # It may be normal for pure Python projects not to have a CMakeLists.txt
             # Instead, search for python files with "def main():"
-            pattern = re.compile('^def\s+main\s*\(.*\)\s*:')
+            pattern = re.compile(r'^def\s+main\s*\(.*\)\s*:')
             for file in pkg.source_files:
                 if file.language != 'python':
                     continue # continue with next file
