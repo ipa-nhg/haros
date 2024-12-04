@@ -101,7 +101,7 @@ class CMakeGrammar(object):
 
     _reCommandEnd = r"\)"
 
-_reFullLine = (
+    _reFullLine = (
                 r"^\s*(?P<FullLine>"
                 f"({ _reCommandStart }"   # This is _reCommandStart
                 r"\s*"
