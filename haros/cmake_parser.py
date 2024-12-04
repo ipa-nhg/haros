@@ -101,21 +101,18 @@ class CMakeGrammar(object):
 
     _reCommandEnd = r"\)"
 
-    _reFullLine = (
-                + r"("
-                + _reCommandStart
-                + r"\s*"
-                + r"("
-                + _reArgs
-                + r")?"
-                + r"\s*"
-                + _reCommandEnd
-                + r")?"
-                + r"\s*"
-                + r"("
-                + _reComment
-                + r")?"
-                + r")\s*$")
+_reFullLine = (
+                r"^\s*(?P<FullLine>"
+                f"({ _reCommandStart }"   # This is _reCommandStart
+                r"\s*"
+                f"({ _reArgs })?"         # This is _reArgs
+                r"\s*"
+                f"{ _reCommandEnd }"      # This is _reCommandEnd
+                r")?"
+                r"\s*"
+                f"({ _reComment })?"      # This is _reComment
+                r")\s*$"
+)
 
     _reMLChunk = r"(?m)(" + _reComment + r"\n|" + _reArg + r")"
 
