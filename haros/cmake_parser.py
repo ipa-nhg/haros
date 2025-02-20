@@ -419,6 +419,7 @@ class RosCMakeParser(LoggingObject):
         )
         self.parser.parse(cmakelists)
         for stmt in self.parser.parsetree:
+            print(stmt)
             command = stmt[0].lower()
             args = CMakeGrammar.split_args(stmt[1]) if stmt[1] else []
             children = stmt[3]
